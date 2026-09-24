@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TafsirTabs from '../../components/TafsirTabs.astro';
+import { getAllSurahs, getSurahContent, getSurahIndexEntry, isVerseReady } from '../../lib/quran';
+
+export async function getStaticPaths() {
+  return getAllSurahs().map((s) => ({ params: { number: String(s.number) } }));
+}
+
+const { number } = Astro.params;
+const surahNumber = Number(number);
+const indexEntry = getSurahIndexEntry(surahNumber);
+const content = getSurahContent(surahNumber);
+
+// عرض/إخفاء الترجمة الإنجليزية — FR3 (حالة أولية بسيطة بلا JS إضافي، Toggle عبر CSS :target أو زر لاحقًا)
+---
+<BaseLayout title={indexEntry?.nameArabic ?? 'سورة'}>
+  <a href="/" class="text-sm text-brand hover:underline">← العودة لقائمة السور</a>
+  <h1 class="text-3xl font-bold text-center my-6">سورة {indexEntry?.nameArabic}</h1>
+
+  {!content ? (
+    <div class="text-center py-16 bg-white/50 rounded-lg">
+      <p class="text-lg mb-2">هذه السورة قيد الإعداد حاليًا.</p>
+      <p class="text-sm opacity-70">النص والتفسير يُضافان تباعًا بعد المراجعة البشرية الإلزامية.</p>
+    </div>
+  ) : (
+    <div class="space-y-8">
+      {Array.from({ length: indexEntry?.versesCount ?? 0 }, (_, i) => i + 1).map((verseNumber) => {
+        const verse = content.verses.find((v) => v.verseNumber === verseNumber);
+        const ready = verse ? isVerseReady(content, verseNumber) : false;
+        return (
+          <div class="bg-white rounded-lg p-4 border border-brand/20">
+            <p class="text-xs opacity-60 mb-2">آية {verseNumber}</p>
+            {!verse || !ready ? (
+              <p class="italic opacity-70 text-sm">هذه الآية قيد الإعداد — النص والتفسير سيُضافان قريبًا بعد المراجعة.</p>
+            ) : (
+              <>
+                <p class="font-quran text-2xl leading-loose mb-3">{verse.textArabic}</p>
+                <p class="text-sm opacity-70 mb-3 english-translation">{verse.translationEnglish}</p>
+                <TafsirTabs tafsir={verse.tafsir} verseNumber={verseNumber} />
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  )}
+</BaseLayout>

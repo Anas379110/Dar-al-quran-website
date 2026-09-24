@@ -1,0 +1,50 @@
+---
+import type { TafsirEntry } from '../data/types';
+import { getReviewedTafsir } from '../lib/quran';
+
+export interface Props {
+  tafsir: TafsirEntry[];
+  verseNumber: number;
+}
+const { tafsir, verseNumber } = Astro.props;
+const reviewed = getReviewedTafsir(tafsir); // لا يُعرض أي تفسير غير مُراجَع (القاعدة الأصرم — D11)
+---
+{reviewed.length === 0 ? (
+  <p class="text-sm italic opacity-70">التفسير قيد الإعداد لهذه الآية.</p>
+) : (
+  <div class="border-t border-brand/20 pt-3">
+    <div class="flex gap-2 mb-2 text-xs">
+      {reviewed.map((t, i) => (
+        <button
+          class={`tafsir-tab-btn px-2 py-1 rounded ${i === 0 ? 'bg-brand text-white' : 'bg-brand/10'}`}
+          data-verse={verseNumber}
+          data-source={t.sourceBook}
+        >
+          {t.sourceBook}
+        </button>
+      ))}
+    </div>
+    {reviewed.map((t, i) => (
+      <p class={`tafsir-content text-sm leading-relaxed ${i === 0 ? '' : 'hidden'}`} data-verse={verseNumber} data-source={t.sourceBook}>
+        {t.content}
+      </p>
+    ))}
+  </div>
+)}
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.tafsir-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const verse = btn.dataset.verse;
+      const source = btn.dataset.source;
+      document.querySelectorAll<HTMLElement>(`.tafsir-tab-btn[data-verse="${verse}"]`).forEach((b) => {
+        b.classList.toggle('bg-brand', b === btn);
+        b.classList.toggle('text-white', b === btn);
+        b.classList.toggle('bg-brand/10', b !== btn);
+      });
+      document.querySelectorAll<HTMLElement>(`.tafsir-content[data-verse="${verse}"]`).forEach((p) => {
+        p.classList.toggle('hidden', p.dataset.source !== source);
+      });
+    });
+  });
+</script>

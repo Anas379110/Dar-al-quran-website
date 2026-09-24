@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAllSurahs } from '../lib/quran';
+
+const surahs = getAllSurahs();
+---
+<BaseLayout title="الرئيسية">
+  <h1 class="text-2xl font-bold mb-2 text-center">دار القرآن</h1>
+  <p class="text-center text-sm mb-6 opacity-80">تفسير من الطبري وابن كثير والسعدي — مُراجَع بشريًا</p>
+
+  <input
+    id="surah-search"
+    type="text"
+    placeholder="ابحث عن سورة بالاسم أو الرقم..."
+    class="w-full border border-brand/30 rounded-lg px-4 py-2 mb-6 bg-white text-brand-dark"
+    autocomplete="off"
+  />
+
+  <div id="surah-list" class="grid gap-2 md:grid-cols-3">
+    {surahs.map((s) => (
+      <a
+        href={`/surah/${s.number}`}
+        class="surah-item flex items-center justify-between border border-brand/20 rounded-lg px-3 py-2 bg-white hover:bg-brand/10 transition-colors"
+        data-name={s.nameArabic}
+        data-number={s.number}
+      >
+        <span class="font-bold">{s.nameArabic}</span>
+        <span class="text-xs opacity-70">{s.number} · {s.versesCount} آية</span>
+      </a>
+    ))}
+  </div>
+
+  <p id="no-results" class="text-center opacity-60 mt-6 hidden">لا توجد سورة مطابقة.</p>
+</BaseLayout>
+
+<script>
+  // بحث فوري Client-side — 114 عنصرًا فقط، لا حاجة لمكتبة بحث خارجية (Pagefind) بهذا الحجم
+  const input = document.getElementById('surah-search') as HTMLInputElement;
+  const items = Array.from(document.querySelectorAll<HTMLElement>('.surah-item'));
+  const noResults = document.getElementById('no-results')!;
+
+  input.addEventListener('input', () => {
+    const query = input.value.trim();
+    let visibleCount = 0;
+    for (const item of items) {
+      const name = item.dataset.name ?? '';
+      const number = item.dataset.number ?? '';
+      const matches = query === '' || name.includes(query) || number === query;
+      item.classList.toggle('hidden', !matches);
+      if (matches) visibleCount++;
+    }
+    noResults.classList.toggle('hidden', visibleCount > 0);
+  });
+</script>

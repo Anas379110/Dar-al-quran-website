@@ -4,6 +4,6 @@
     "bash": "ask"
   },
   "hooks": {
-    "PreCommit": ["./.claude/hooks/pre-commit-secrets-check.sh"]
+    "PreToolUse": ["./.claude/hooks/pre-commit-secrets-check.sh"]
   }
 }
